@@ -50,6 +50,12 @@ def test_ort_dml_warning(caplog):
     assert caplog.records[0].levelname == "WARNING"
     assert "DirectML" in caplog.records[0].message
 
+def test_ort_coreml_warning(caplog):
+    engine = RapidOCR(use_coreml=True)
+    caplog.set_level(logging.WARNING)
+
+    assert caplog.records[0].levelname == "WARNING"
+    assert "CoreMLExecutionProvider" in caplog.records[0].message
 
 def test_mode_one_img():
     img_path = tests_dir / "issue_170.png"

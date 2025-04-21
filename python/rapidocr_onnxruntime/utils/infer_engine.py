@@ -24,6 +24,7 @@ class EP(Enum):
     CPU_EP = "CPUExecutionProvider"
     CUDA_EP = "CUDAExecutionProvider"
     DIRECTML_EP = "DmlExecutionProvider"
+    COREML_EP = "CoreMLExecutionProvider"
 
 
 class OrtInferSession:
@@ -35,6 +36,7 @@ class OrtInferSession:
 
         self.cfg_use_cuda = config.get("use_cuda", None)
         self.cfg_use_dml = config.get("use_dml", None)
+        self.cfg_use_coreml = config.get("use_coreml", None)
 
         self.had_providers: List[str] = get_available_providers()
         EP_list = self._get_ep_list()
@@ -90,6 +92,17 @@ class OrtInferSession:
                 cuda_provider_opts if self.use_cuda else cpu_provider_opts
             )
             EP_list.insert(0, (EP.DIRECTML_EP.value, directml_options))
+
+        self.use_coreml = self._check_coreml()
+        if self.use_coreml:
+            self.logger.info(
+                "macOS detected, try to use CoreML as primary provider. "
+                "Note that CoreML is only supported in macOS 10.15 and above."
+            )
+            coreml_options = {
+                "ModelFormat": "MLProgram"
+            }
+            EP_list.insert(0, (EP.COREML_EP.value, coreml_options))
         return EP_list
 
     def _check_cuda(self) -> bool:
@@ -172,6 +185,22 @@ class OrtInferSession:
         )
         return False
 
+    def _check_coreml(self):
+        if not self.cfg_use_coreml:
+            return False
+        
+        cur_os = platform.system()
+        if cur_os == "Darwin":
+            cur_macos_version = platform.mac_ver()[0]
+
+            if float(cur_macos_version) < 10.15:
+                return False
+            
+            if EP.COREML_EP.value in self.had_providers:
+                return True
+        
+        return False
+
     def _verify_providers(self):
         session_providers = self.session.get_providers()
         first_provider = session_providers[0]
@@ -187,6 +216,13 @@ class OrtInferSession:
             self.logger.warning(
                 "%s is not available for current env, the inference part is automatically shifted to be executed under %s.",
                 EP.DIRECTML_EP.value,
+                first_provider,
+            )
+
+        if self.use_coreml and first_provider != EP.COREML_EP.value:
+            self.logger.warning(
+                "%s is not available for current env, the inference part is automatically shifted to be executed under %s.",
+                EP.COREML_EP.value,
                 first_provider,
             )
 

@@ -45,6 +45,7 @@ class OrtInferSession(InferSession):
 
         self.cfg_use_cuda = config.engine_cfg.get("use_cuda", None)
         self.cfg_use_dml = config.engine_cfg.get("use_dml", None)
+        self.cfg_use_coreml = config.engine_cfg.get("use_coreml", None)
 
         self.had_providers: List[str] = get_available_providers()
         EP_list = self._get_ep_list()

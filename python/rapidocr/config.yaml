@@ -27,6 +27,7 @@ EngineConfig:
         inter_op_num_threads: -1
         use_cuda: false
         use_dml: false
+        use_coreml: false
 
     openvino:
         inference_num_threads: -1

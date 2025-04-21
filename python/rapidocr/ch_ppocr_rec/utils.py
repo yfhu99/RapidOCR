@@ -20,6 +20,7 @@ class TextRecConfig:
     inter_op_num_threads: int = -1
     use_cuda: bool = False
     use_dml: bool = False
+    use_coreml: bool = False
     model_path: Union[str, Path, None] = None
 
     rec_batch_num: int = 6
